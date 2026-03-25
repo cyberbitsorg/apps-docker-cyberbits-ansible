@@ -30,9 +30,9 @@ Without proper DNS resolution, SSL certificate generation will fail and your sit
 │       └── nextcloud_apps.yaml          # Nextcloud app configs
 ├── playbooks/
 │   ├── deploy-traefik.yaml          # Deploy reverse proxy first
-│   ├── deploy-nginx_apps.yaml       # Static HTML apps
-│   ├── deploy-wordpress_apps.yaml   # WordPress apps
-│   └── deploy-nextcloud_apps.yaml   # Nextcloud apps
+│   ├── deploy-nginx-apps.yaml       # Static HTML apps
+│   ├── deploy-wordpress-apps.yaml   # WordPress apps
+│   └── deploy-nextcloud-apps.yaml   # Nextcloud apps
 └── roles/
     ├── common/                      # Docker networks
     ├── traefik/                     # Reverse proxy
