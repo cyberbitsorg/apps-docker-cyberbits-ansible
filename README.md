@@ -1,6 +1,6 @@
 # Docker apps for cyberbits.org
 
-Docker container orchestration with Ansible. Cloud-agnostic - works on any Docker host.
+Docker container orchestration with Ansible. Cloud agnostic: works on any Docker host.
 
 ## Domain name resolution required
 
@@ -90,12 +90,12 @@ Edit `inventory/group_vars/nginx_apps.yaml`:
 
 ```yaml
 nginx_apps:
-  - name: mysite
-    domain: example.com
-    title: "My Site"
-    message: "Welcome to my site"
+  - name: firstnx
+    domain: firstnx.cyberbits.org
+    title: "cyberbits.org"
+    message: "Welcome to my first Nginx cyberbits.org"
     www_redirect: false
-    # nginx_template: default   # optional, see templates below
+    # nginx_template: default   # see below for details
 ```
 
 #### Adding an instance
