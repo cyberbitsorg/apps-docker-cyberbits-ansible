@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# Nextcloud Instances Configuration
+# =============================================================================
+
+# =============================================================================
+# DISCLAIMER: Domain Name Resolution Required!
+# Before running this playbook, ensure your domain names correctly resolve
+# to your server's IP address. Let's Encrypt requires valid DNS records.
+# Create A records pointing your domains to this server and wait for DNS
+# propagation.
+#
+# Without proper DNS resolution, SSL certificate generation will
+# fail and a lot of failed requests will result in a (temporary)
+# Let's Encrypt ban
+# =============================================================================
+
+nextcloud_apps:
+  - name: firstnc
+    domain: firstnc.cyberbits.org
+    admin_user: henkbatelaan
+  - name: secondnc
+    domain: secondnc.cyberbits.org
+    admin_user: henkbatelaan
+    
+    # =============================================================================
+    # Optional Settings (uncomment to override defaults)
+    # =============================================================================
+    # php_memory_limit: 1024M    # Default: 1024M - PHP memory limit (Nextcloud needs more than WordPress)
+    # max_upload_size: 10G        # Default: 10G - Maximum file upload size
+    # redis_maxmemory: 256mb      # Default: 256mb - Redis cache size (Nextcloud benefits from more cache)
+    
+  # Example of a second instance with custom settings:
+  # - name: team
+  #   domain: team.example.com
+  #   admin_user: admin
+  #   php_memory_limit: 2048M
+  #   max_upload_size: 20G
+  #   redis_maxmemory: 512mb

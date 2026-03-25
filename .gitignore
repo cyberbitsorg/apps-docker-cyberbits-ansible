@@ -1,0 +1,17 @@
+# Ansible
+*.retry
+.ansible/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

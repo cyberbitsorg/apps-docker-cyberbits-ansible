@@ -1,0 +1,25 @@
+---
+# =============================================================================
+# Global Configuration
+# =============================================================================
+
+# =============================================================================
+# DISCLAIMER: Domain Name Resolution Required!
+# Before running this playbook, ensure your domain names correctly resolve
+# to your server's IP address. Let's Encrypt requires valid DNS records.
+# Create A records pointing your domains to this server and wait for DNS
+# propagation.
+#
+# Without proper DNS resolution, SSL certificate generation will
+# fail and a lot of failed requests will result in a (temporary)
+# Let's Encrypt ban
+# =============================================================================
+
+# Admin email for Let's Encrypt certificates
+admin_email: "support@cyberbits.org"
+
+# Docker Networks
+docker_networks: []
+
+# Base directories
+base_app_dir: /opt

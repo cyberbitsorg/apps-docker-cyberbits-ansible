@@ -1,0 +1,39 @@
+---
+- name: Deploy All Applications
+  hosts: vps
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: common
+      tags: ['common']
+
+    - role: traefik
+      tags: ['traefik', 'proxy']
+
+    - role: wordpress-apps
+      tags: ['wordpress', 'apps']
+
+    - role: nginx-apps
+      tags: ['nginx', 'apps']
+
+    - role: nextcloud-apps
+      tags: ['nextcloud', 'apps']
+
+  tasks:
+    - name: Build deployment summary message
+      set_fact:
+        deploy_summary: "{{ deploy_summary | default(['All applications deployed successfully!', '']) + nginx_lines + wordpress_lines + nextcloud_lines + nextcloud_env_lines }}"
+      vars:
+        nginx_header: ['Nginx:']
+        nginx_lines: "{{ nginx_header + (nginx_apps | default([]) | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list) }}"
+        wordpress_header: ['', 'Wordpress:']
+        wordpress_lines: "{{ wordpress_header + (wordpress_apps | default([]) | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list) }}"
+        nextcloud_header: ['', 'Nextcloud:']
+        nextcloud_lines: "{{ nextcloud_header + (nextcloud_apps | default([]) | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list) }}"
+        nextcloud_env_header: ['', 'For Nextcloud, your first login credentials are in the .env files at:']
+        nextcloud_env_lines: "{{ nextcloud_env_header + (nextcloud_apps | default([]) | map(attribute='name') | map('regex_replace', '^(.*)$', '  /opt/nextcloud-apps/\\1/.env') | list) }}"
+
+    - name: Display deployment summary
+      debug:
+        msg: "{{ deploy_summary }}"

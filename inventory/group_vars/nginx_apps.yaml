@@ -1,0 +1,57 @@
+---
+# =============================================================================
+# Nginx Static Sites Configuration
+# =============================================================================
+
+# =============================================================================
+# DISCLAIMER: Domain Name Resolution Required!
+# Before running this playbook, ensure your domain names correctly resolve
+# to your server's IP address. Let's Encrypt requires valid DNS records.
+# Create A records pointing your domains to this server and wait for DNS
+# propagation.
+#
+# Without proper DNS resolution, SSL certificate generation will
+# fail and a lot of failed requests will result in a (temporary)
+# Let's Encrypt ban
+# =============================================================================
+
+nginx_apps:
+  - name: firstnx
+    domain: firstnx.cyberbits.org
+    title: "cyberbits.org"
+    message: "Welcome to my first Nginx cyberbits.org"
+    www_redirect: false
+    # nginx_template: default   # omit or set to 'default' for standard static site
+
+  - name: secondnx
+    domain: secondnx.cyberbits.org
+    title: "cyberbits.org"
+    message: "Welcome to my second Nginx cyberbits.org"
+    www_redirect: false
+    # nginx_template: spa       # use 'spa' for React/Vue/Angular apps
+
+    # =============================================================================
+    # nginx_template options:
+    # =============================================================================
+    #   (omitted)   → nginx-default.conf.j2  — standard static file serving
+    #   default     → nginx-default.conf.j2  — same as above
+    #   spa         → nginx-spa.conf.j2      — SPA (React/Vue/Angular), routes
+    #                                           all 404s to index.html
+    #
+    # To add your own template:
+    #   1. Create roles/nginx-apps/templates/nginx-{name}.conf.j2
+    #   2. Set nginx_template: {name} on any site
+    #   3. Re-run the playbook — Ansible deploys it automatically
+    #
+    # =============================================================================
+    # Content Management:
+    # =============================================================================
+    # After deployment, content is stored in: /opt/nginx-apps/{name}/data/
+    # Simply upload your website files (HTML/CSS/JS) to this directory.
+    #
+    # The container mounts: ./data:/var/www/html:ro
+    #
+    # Example workflow:
+    #   1. Deploy the site with this playbook
+    #   2. Upload your files: scp -r ./my-website/* user@server:/opt/nginx-apps/mysite/data/
+    #   3. Your site is live immediately

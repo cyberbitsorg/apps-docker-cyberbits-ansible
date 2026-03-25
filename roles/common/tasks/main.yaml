@@ -1,0 +1,6 @@
+---
+- name: Create Docker networks
+  docker_network:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ docker_networks }}"

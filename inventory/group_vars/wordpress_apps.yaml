@@ -1,0 +1,50 @@
+---
+# =============================================================================
+# WordPress Sites Configuration
+# =============================================================================
+
+# =============================================================================
+# DISCLAIMER: Domain Name Resolution Required!
+# Before running this playbook, ensure your domain names correctly resolve
+# to your server's IP address. Let's Encrypt requires valid DNS records.
+# Create A records pointing your domains to this server and wait for DNS
+# propagation. Without proper DNS resolution, SSL certificate generation will
+# fail.
+# =============================================================================
+
+wordpress_image: wordpress:6-fpm-alpine
+wordpress_db_image: mariadb:10.11
+wordpress_redis_image: redis:7-alpine
+wordpress_nginx_image: nginx:alpine
+
+# =============================================================================
+# Site-Specific Configurations
+# =============================================================================
+
+wordpress_apps:
+  - name: firstwp
+    domain: firstwp.cyberbits.org
+    db_name: firstwp_wp
+    db_user: firstwp_wp
+    table_prefix: wp_
+    www_redirect: false
+  - name: secondwp
+    domain: secondwp.cyberbits.org
+    db_name: secondwp_wp
+    db_user: secondwp_wp
+    table_prefix: wp_
+    www_redirect: false
+    
+    # =============================================================================
+    # Optional PHP Settings (uncomment to override defaults)
+    # =============================================================================
+    # php_memory_limit: 512M        # Default: 512M - Memory limit for PHP scripts
+    # php_upload_max_filesize: 64M  # Default: 64M - Maximum upload file size
+    # php_post_max_size: 64M        # Default: 64M - Maximum POST data size
+    # php_max_execution_time: 300   # Default: 300s - Maximum script execution time
+    
+    # =============================================================================
+    # Optional Redis Settings (uncomment to override defaults)
+    # =============================================================================
+    # redis_maxmemory: 128mb               # Default: 128mb - Redis cache memory limit
+    # redis_maxmemory_policy: allkeys-lru  # Default: allkeys-lru - Eviction policy

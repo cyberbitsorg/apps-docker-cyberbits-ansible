@@ -1,0 +1,164 @@
+services:
+  db:
+    image: {{ wordpress_db_image }}
+    container_name: "wp-{{ item.name }}-db"
+    restart: unless-stopped
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --skip-log-bin
+      --local-infile=0
+      --skip-symbolic-links
+      --max-connections=100
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - {{ item.name }}-db-data:/var/lib/mysql
+    networks:
+      - {{ item.name }}-internal
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: {{ wordpress_redis_image }}
+    container_name: "wp-{{ item.name }}-redis"
+    restart: unless-stopped
+    command: redis-server --maxmemory {{ item.redis_maxmemory | default('128mb') }} --maxmemory-policy {{ item.redis_maxmemory_policy | default('allkeys-lru') }}
+    volumes:
+      - {{ item.name }}-redis-data:/data
+    networks:
+      - {{ item.name }}-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+
+  wordpress:
+    image: {{ wordpress_image }}
+    container_name: "wp-{{ item.name }}-app"
+    hostname: "wp-{{ item.name }}"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX:-wp_}
+      PHP_UPLOAD_MAX_FILESIZE: {{ item.php_upload_max_filesize | default('64M') }}
+      PHP_POST_MAX_SIZE: {{ item.php_post_max_size | default('64M') }}
+      WORDPRESS_AUTH_KEY: ${WP_AUTH_KEY}
+      WORDPRESS_SECURE_AUTH_KEY: ${WP_SECURE_AUTH_KEY}
+      WORDPRESS_LOGGED_IN_KEY: ${WP_LOGGED_IN_KEY}
+      WORDPRESS_NONCE_KEY: ${WP_NONCE_KEY}
+      WORDPRESS_AUTH_SALT: ${WP_AUTH_SALT}
+      WORDPRESS_SECURE_AUTH_SALT: ${WP_SECURE_AUTH_SALT}
+      WORDPRESS_LOGGED_IN_SALT: ${WP_LOGGED_IN_SALT}
+      WORDPRESS_NONCE_SALT: ${WP_NONCE_SALT}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('DISALLOW_FILE_EDIT', true);
+        define('FORCE_SSL_ADMIN', true);
+        define('WP_AUTO_UPDATE_CORE', 'minor');
+        define('WP_MEMORY_LIMIT', '{{ item.php_memory_limit | default('512M') }}');
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        define('WP_REDIS_DATABASE', 0);
+        define('WP_CACHE', true);
+    volumes:
+      - {{ item.name }}-wordpress-data:/var/www/html
+      - ./php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    networks:
+      - {{ item.name }}-internal
+      - traefik
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep php-fpm > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    extra_hosts:
+      - "{{ item.domain }}:host-gateway"
+
+  nginx:
+    image: {{ wordpress_nginx_image }}
+    container_name: "wp-{{ item.name }}-nginx"
+    restart: unless-stopped
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    volumes:
+      - {{ item.name }}-wordpress-data:/var/www/html:ro
+      - ./nginx/wordpress.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - {{ item.name }}-internal
+      - traefik
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wp-{{ item.name }}.rule=Host(`{{ item.domain }}`){% if item.www_redirect | default(false) %} || Host(`www.{{ item.domain }}`){% endif %}"
+      - "traefik.http.routers.wp-{{ item.name }}.entrypoints=websecure"
+      - "traefik.http.routers.wp-{{ item.name }}.tls=true"
+      - "traefik.http.routers.wp-{{ item.name }}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.wp-{{ item.name }}.middlewares=security-headers@file,rate-limit@file,compress@file"
+      - "traefik.http.services.wp-{{ item.name }}.loadbalancer.server.port=80"
+
+  wpcli:
+    image: wordpress:cli
+    container_name: "wp-{{ item.name }}-wpcli"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX:-wp_}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        define('WP_REDIS_DATABASE', 0);
+        define('WP_CACHE', true);
+    volumes:
+      - {{ item.name }}-wordpress-data:/var/www/html
+    networks:
+      - {{ item.name }}-internal
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_healthy
+    profiles:
+      - tools
+
+volumes:
+  {{ item.name }}-db-data:
+  {{ item.name }}-wordpress-data:
+  {{ item.name }}-redis-data:
+
+networks:
+  {{ item.name }}-internal:
+    driver: bridge
+    internal: true
+  traefik:
+    external: true

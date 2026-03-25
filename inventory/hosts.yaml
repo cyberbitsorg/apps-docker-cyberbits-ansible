@@ -1,0 +1,21 @@
+---
+vps:
+  children:
+    traefik:
+      hosts:
+        server:
+    nginx_apps:
+      hosts:
+        server:
+    nextcloud_apps:
+      hosts:
+        server:
+    wordpress_apps:
+      hosts:
+        server:
+  vars:
+    ansible_host: fsn-web02.cyberbits.org
+    ansible_user: deployacc
+    domain: cyberbits.org
+    admin_email: henk.batelaan@cyberbits.org
+    ansible_python_interpreter: /usr/bin/python3

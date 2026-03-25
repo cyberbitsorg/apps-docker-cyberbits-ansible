@@ -1,0 +1,103 @@
+---
+- name: Create WordPress app directories
+  file:
+    path: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Create WordPress nginx directories
+  file:
+    path: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/nginx"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy WordPress docker-compose files
+  template:
+    src: docker-compose.wordpress-app.yaml.j2
+    dest: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/docker-compose.yaml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy Nginx configuration for each app
+  template:
+    src: wordpress-app.conf.j2
+    dest: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/nginx/wordpress.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy PHP configuration for each app
+  template:
+    src: php-uploads.ini.j2
+    dest: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/php-uploads.ini"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Check if .env file exists for each app
+  stat:
+    path: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/.env"
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: wordpress_env_files
+  no_log: true
+
+- name: Create .env file for new WordPress apps
+  template:
+    src: wordpress-app.env.j2
+    dest: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: idx
+  when: not wordpress_env_files.results[idx].stat.exists
+  no_log: true
+
+- name: Start WordPress apps
+  community.docker.docker_compose_v2:
+    project_src: "{{ base_app_dir }}/wordpress-apps/{{ item.name }}"
+    state: present
+    remove_orphans: true
+  environment:
+    COMPOSE_PROJECT_NAME: "wp-{{ item.name }}"
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Configure WP-Cron for each app
+  cron:
+    name: "WordPress cron - {{ item.name }}"
+    minute: "*/5"
+    hour: "*"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "cd {{ base_app_dir }}/wordpress-apps/{{ item.name }} && COMPOSE_PROJECT_NAME=wp-{{ item.name }} docker compose --profile tools run --rm wpcli wp cron event run --due-now --allow-root > /dev/null 2>&1"
+    user: "{{ ansible_user }}"
+  loop: "{{ wordpress_apps }}"
+  loop_control:
+    label: "{{ item.name }}"

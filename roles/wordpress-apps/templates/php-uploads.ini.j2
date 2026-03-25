@@ -1,0 +1,7 @@
+; PHP Upload Limits for WordPress Media Library
+upload_max_filesize = {{ item.php_upload_max_filesize | default('64M') }}
+post_max_size = {{ item.php_post_max_size | default('64M') }}
+max_file_uploads = 20
+max_execution_time = {{ item.php_max_execution_time | default(300) }}
+max_input_time = 300
+memory_limit = {{ item.php_memory_limit | default('512M') }}

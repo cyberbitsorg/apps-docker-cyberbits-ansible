@@ -1,0 +1,51 @@
+---
+- name: Ensure Traefik directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop:
+    - "{{ traefik_config_dir }}"
+    - "{{ traefik_config_dir }}/config"
+    - "{{ traefik_config_dir }}/letsencrypt"
+
+- name: Create Traefik Docker network
+  docker_network:
+    name: traefik
+    state: present
+
+- name: Deploy Traefik configuration
+  template:
+    src: traefik.yml.j2
+    dest: "{{ traefik_config_dir }}/traefik.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  notify: restart traefik
+
+- name: Deploy Traefik dynamic configuration
+  template:
+    src: dynamic.yml.j2
+    dest: "{{ traefik_config_dir }}/config/dynamic.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  notify: restart traefik
+
+- name: Deploy Traefik docker-compose
+  template:
+    src: docker-compose.traefik.yml.j2
+    dest: "{{ traefik_config_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Start Traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ traefik_config_dir }}"
+    state: present
+    remove_orphans: true
+  environment:
+    COMPOSE_PROJECT_NAME: "gw-traefik"

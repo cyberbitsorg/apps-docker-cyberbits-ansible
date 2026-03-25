@@ -1,0 +1,122 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: "nc-{{ item.name }}-db"
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - {{ item.name }}-db-data:/var/lib/postgresql/data
+    networks:
+      - {{ item.name }}-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    container_name: "nc-{{ item.name }}-redis"
+    restart: unless-stopped
+    command: redis-server --maxmemory {{ item.redis_maxmemory | default('128mb') }} --maxmemory-policy {{ item.redis_maxmemory_policy | default('allkeys-lru') }}
+    volumes:
+      - {{ item.name }}-redis-data:/data
+    networks:
+      - {{ item.name }}-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    image: nextcloud:28-apache
+    container_name: "nc-{{ item.name }}-app"
+    hostname: "nc-{{ item.name }}-app"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ item.domain }}"
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: "{{ item.domain }}"
+      TRUSTED_PROXIES: "172.16.0.0/12"
+      REDIS_HOST: redis
+      REDIS_HOST_PORT: 6379
+      PHP_MEMORY_LIMIT: {{ item.php_memory_limit | default('1024M') }}
+      PHP_UPLOAD_LIMIT: {{ item.max_upload_size | default('2G') }}
+    volumes:
+      - {{ item.name }}-nextcloud-data:/var/www/html
+    networks:
+      - {{ item.name }}-internal
+      - traefik
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nc-{{ item.name }}.rule=Host(`{{ item.domain }}`)"
+      - "traefik.http.routers.nc-{{ item.name }}.entrypoints=websecure"
+      - "traefik.http.routers.nc-{{ item.name }}.tls=true"
+      - "traefik.http.routers.nc-{{ item.name }}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nc-{{ item.name }}.middlewares=security-headers@file,rate-limit@file,compress@file"
+      - "traefik.http.services.nc-{{ item.name }}.loadbalancer.server.port=80"
+
+  cron:
+    image: nextcloud:28-apache
+    container_name: "nc-{{ item.name }}-cron"
+    hostname: "nc-{{ item.name }}-cron"
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - {{ item.name }}-nextcloud-data:/var/www/html
+    networks:
+      - {{ item.name }}-internal
+    entrypoint: /cron.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'crond' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  {{ item.name }}-db-data:
+  {{ item.name }}-nextcloud-data:
+  {{ item.name }}-redis-data:
+
+networks:
+  {{ item.name }}-internal:
+    driver: bridge
+    internal: true
+  traefik:
+    external: true

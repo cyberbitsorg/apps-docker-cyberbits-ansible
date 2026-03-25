@@ -1,0 +1,31 @@
+services:
+  traefik:
+    image: traefik:{{ traefik_version }}
+    container_name: gw-traefik
+    restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.45
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config:/etc/traefik/config:ro
+      - traefik-ssl:/letsencrypt
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  traefik-ssl:
+
+networks:
+  traefik:
+    external: true

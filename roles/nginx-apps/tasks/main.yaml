@@ -1,0 +1,46 @@
+---
+- name: Create nginx apps directories
+  file:
+    path: "{{ base_app_dir }}/nginx-apps/{{ item.name }}/data"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop: "{{ nginx_apps }}"
+
+- name: Deploy nginx apps docker-compose files
+  template:
+    src: docker-compose.nginx-app.yaml.j2
+    dest: "{{ base_app_dir }}/nginx-apps/{{ item.name }}/docker-compose.yaml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ nginx_apps }}"
+
+- name: Deploy nginx configuration
+  template:
+    src: "nginx-{{ item.nginx_template | default('default') }}.conf.j2"
+    dest: "{{ base_app_dir }}/nginx-apps/{{ item.name }}/nginx.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ nginx_apps }}"
+
+- name: Deploy default index.html for new sites
+  template:
+    src: index.html.j2
+    dest: "{{ base_app_dir }}/nginx-apps/{{ item.name }}/data/index.html"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+    force: false
+  loop: "{{ nginx_apps }}"
+
+- name: Start nginx apps
+  community.docker.docker_compose_v2:
+    project_src: "{{ base_app_dir }}/nginx-apps/{{ item.name }}"
+    state: present
+    remove_orphans: true
+  environment:
+    COMPOSE_PROJECT_NAME: "nx-{{ item.name }}"
+  loop: "{{ nginx_apps }}"

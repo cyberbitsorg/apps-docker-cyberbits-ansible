@@ -1,0 +1,56 @@
+---
+- name: Create Nextcloud app directories
+  file:
+    path: "{{ base_app_dir }}/nextcloud-apps/{{ item.name }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  loop: "{{ nextcloud_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy Nextcloud docker-compose files
+  template:
+    src: docker-compose.nextcloud-app.yaml.j2
+    dest: "{{ base_app_dir }}/nextcloud-apps/{{ item.name }}/docker-compose.yaml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  loop: "{{ nextcloud_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Check if .env file exists for each app
+  stat:
+    path: "{{ base_app_dir }}/nextcloud-apps/{{ item.name }}/.env"
+  loop: "{{ nextcloud_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: nextcloud_env_files
+  no_log: true
+
+- name: Create .env file for new Nextcloud apps
+  template:
+    src: nextcloud-app.env.j2
+    dest: "{{ base_app_dir }}/nextcloud-apps/{{ item.name }}/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+  loop: "{{ nextcloud_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: idx
+  when: not nextcloud_env_files.results[idx].stat.exists
+  no_log: true
+
+- name: Start Nextcloud apps
+  community.docker.docker_compose_v2:
+    project_src: "{{ base_app_dir }}/nextcloud-apps/{{ item.name }}"
+    state: present
+    remove_orphans: true
+  environment:
+    COMPOSE_PROJECT_NAME: "nc-{{ item.name }}"
+  loop: "{{ nextcloud_apps }}"
+  loop_control:
+    label: "{{ item.name }}"

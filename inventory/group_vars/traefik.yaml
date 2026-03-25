@@ -1,0 +1,23 @@
+---
+# =============================================================================
+# Traefik Reverse Proxy Configuration
+# =============================================================================
+
+# =============================================================================
+# DISCLAIMER: Domain Name Resolution Required!
+# Before running this playbook, ensure your domain names correctly resolve
+# to your server's IP address. Let's Encrypt requires valid DNS records.
+# Create A records pointing your domains to this server and wait for DNS
+# propagation.
+#
+# Without proper DNS resolution, SSL certificate generation will
+# fail and a lot of failed requests will result in a (temporary)
+# Let's Encrypt ban
+# =============================================================================
+
+# Traefik Configuration
+traefik_version: v3.6
+traefik_network: traefik
+traefik_config_dir: /opt/traefik
+traefik_letsencrypt_email: "{{ admin_email }}"
+traefik_dashboard_enabled: false

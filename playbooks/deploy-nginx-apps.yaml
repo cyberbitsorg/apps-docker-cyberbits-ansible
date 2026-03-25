@@ -1,0 +1,25 @@
+---
+- name: Deploy Nginx Static Sites
+  hosts: nginx_apps
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: common
+      tags: ['common']
+
+    - role: nginx-apps
+      tags: ['nginx-apps', 'apps']
+
+  tasks:
+    - name: Build nginx URLs list
+      set_fact:
+        nginx_urls: "{{ nginx_apps | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list }}"
+
+    - name: Build nginx summary
+      set_fact:
+        nginx_summary: "{{ ['Nginx sites deployed successfully!', ''] + ['Sites:'] + nginx_urls }}"
+
+    - name: Display nginx sites deployment summary
+      debug:
+        msg: "{{ nginx_summary }}"

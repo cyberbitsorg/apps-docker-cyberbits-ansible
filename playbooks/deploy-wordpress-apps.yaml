@@ -1,0 +1,25 @@
+---
+- name: Deploy WordPress Applications
+  hosts: wordpress_apps
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: common
+      tags: ['common']
+
+    - role: wordpress-apps
+      tags: ['wordpress', 'apps']
+
+  tasks:
+    - name: Build WordPress URLs list
+      set_fact:
+        wordpress_urls: "{{ wordpress_apps | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list }}"
+
+    - name: Build WordPress summary
+      set_fact:
+        wordpress_summary: "{{ ['WordPress applications deployed successfully!', ''] + ['Sites:'] + wordpress_urls }}"
+
+    - name: Display WordPress deployment summary
+      debug:
+        msg: "{{ wordpress_summary }}"

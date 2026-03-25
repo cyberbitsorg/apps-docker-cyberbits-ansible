@@ -1,0 +1,26 @@
+---
+- name: Deploy Nextcloud Instances
+  hosts: nextcloud_apps
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: common
+      tags: ['common']
+
+    - role: nextcloud-apps
+      tags: ['nextcloud', 'apps']
+
+  tasks:
+    - name: Build Nextcloud URLs list
+      set_fact:
+        nextcloud_urls: "{{ nextcloud_apps | map(attribute='domain') | map('regex_replace', '^(.*)$', '  - https://\\1') | list }}"
+        nextcloud_envs: "{{ nextcloud_apps | map(attribute='name') | map('regex_replace', '^(.*)$', '  /opt/nextcloud-apps/\\1/.env') | list }}"
+
+    - name: Build Nextcloud summary
+      set_fact:
+        nextcloud_summary: "{{ ['Nextcloud instances deployed successfully!', ''] + ['Instances:'] + nextcloud_urls + [''] + ['First login credentials are in the .env files at:'] + nextcloud_envs }}"
+
+    - name: Display nextcloud deployment summary
+      debug:
+        msg: "{{ nextcloud_summary }}"
