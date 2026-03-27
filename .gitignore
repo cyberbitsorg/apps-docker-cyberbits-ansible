@@ -2,6 +2,9 @@
 *.retry
 .ansible/
 
+# Vault password file (the encrypted vault.yaml is safe to commit)
+.vault_pass
+
 # OS specific
 .DS_Store
 Thumbs.db
