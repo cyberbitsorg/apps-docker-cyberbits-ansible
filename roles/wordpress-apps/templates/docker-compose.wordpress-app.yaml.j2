@@ -153,8 +153,11 @@ services:
 
 volumes:
   {{ item.name }}-db-data:
+    name: "wp-{{ item.name }}-db-data"
   {{ item.name }}-wordpress-data:
+    name: "wp-{{ item.name }}-wordpress-data"
   {{ item.name }}-redis-data:
+    name: "wp-{{ item.name }}-redis-data"
 
 networks:
   {{ item.name }}-internal:

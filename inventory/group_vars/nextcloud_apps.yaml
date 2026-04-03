@@ -15,6 +15,9 @@
 # Let's Encrypt ban
 # =============================================================================
 
+# Skip Nextcloud altogether by specifying an empty list
+# nextcloud_apps: []
+
 nextcloud_apps:
   - name: firstnc
     domain: firstnc.cyberbits.org
@@ -29,11 +32,3 @@ nextcloud_apps:
     # php_memory_limit: 1024M    # Default: 1024M - PHP memory limit (Nextcloud needs more than WordPress)
     # max_upload_size: 10G        # Default: 10G - Maximum file upload size
     # redis_maxmemory: 256mb      # Default: 256mb - Redis cache size (Nextcloud benefits from more cache)
-    
-  # Example of a second instance with custom settings:
-  # - name: team
-  #   domain: team.example.com
-  #   admin_user: admin
-  #   php_memory_limit: 2048M
-  #   max_upload_size: 20G
-  #   redis_maxmemory: 512mb

@@ -52,7 +52,7 @@ If you just encrypted the file, simple dsecrypt it and add it to the top.
 ansible-vault decrypt inventory/group_vars/all/vault.yaml
 ```
 
-Never forget to encrypt it again beffore committing.
+Never forget to encrypt it again before committing.
 
 As for the sudo password, if you provisioned the server with [infra-hetzner-vps-clean](https://github.com/cyberbitsorg/infra-hetzner-vps-clean), retrieve the sudo password from there:
 
@@ -77,10 +77,10 @@ ansible-vault view inventory/group_vars/all/vault.yaml
 ansible-vault decrypt inventory/group_vars/all/vault.yaml
 ```
 
-### Adding a new app
+### Adding a new app with passwords
 
-1. Add the app to `wordpress_apps.yaml` or `nextcloud_apps.yaml`
-2. Re-run the setup script — it detects which apps are already in the vault and only generates secrets for new ones:
+1. Add the app to `wordpress_apps.yaml` or `nextcloud_apps.yaml` in the `group_vars`
+2. Re-run the setup script; it detects which apps are already in the vault and only generates secrets for new ones
 
 ```bash
 ./ansible-vault-setup.sh
@@ -119,6 +119,8 @@ ansible-playbook playbooks/deploy-wordpress-apps.yaml
 # Or deploy everything at once
 ansible-playbook playbooks/deploy-all.yaml
 ```
+
+Skip a certain type of application by specifying an empty list in the appropriate `group_vars` file.
 
 ## Application Configuration
 

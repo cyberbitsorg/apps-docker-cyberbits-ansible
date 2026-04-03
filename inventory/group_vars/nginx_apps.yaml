@@ -15,6 +15,9 @@
 # Let's Encrypt ban
 # =============================================================================
 
+# Skip Nginx apps altogether by specifying an empty list
+# nginx_apps: []
+
 nginx_apps:
   - name: firstnx
     domain: firstnx.cyberbits.org

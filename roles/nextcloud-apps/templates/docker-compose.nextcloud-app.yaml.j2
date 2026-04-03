@@ -111,8 +111,11 @@ services:
 
 volumes:
   {{ item.name }}-db-data:
+    name: "nc-{{ item.name }}-db-data"
   {{ item.name }}-nextcloud-data:
+    name: "nc-{{ item.name }}-nextcloud-data"
   {{ item.name }}-redis-data:
+    name: "nc-{{ item.name }}-redis-data"
 
 networks:
   {{ item.name }}-internal:
