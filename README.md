@@ -1,4 +1,4 @@
-# Docker apps for cyberbits.org
+# Container apps for any Docker host - setup with Ansible
 
 Docker container orchestration with Ansible. Cloud agnostic: works on any Docker host.
 
