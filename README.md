@@ -37,24 +37,9 @@ Secrets are generated automatically from your app names.
 ./ansible-vault-setup.sh
 ```
 
-This reads your app names, generates a strong random secret for each one, writes `vault.yaml`, and encrypts it. You will be prompted for a vault passphrase (saved to `.vault_pass`, gitignored) and for the sudo password of the deploy user.
+This reads your app names, generates a strong random secret for each one, writes `vault.yaml`, and encrypts it. You will be prompted for a vault passphrase (saved to `.vault_pass`, gitignored) and for the sudo password of the deploy user (`ansible_become_password`).
 
-You'll also need to add the deploy user sudo password to the `vault.yaml`:
-
-```bash
-# Sudo password for privilege escalation
-ansible_become_password: "G905kmfwo2x50wdcftghuvYauOpn"
-```
-
-If you just encrypted the file, simple dsecrypt it and add it to the top.
-
-```bash
-ansible-vault decrypt inventory/group_vars/all/vault.yaml
-```
-
-Never forget to encrypt it again before committing.
-
-As for the sudo password, if you provisioned the server with [infra-hetzner-vps-clean](https://github.com/cyberbitsorg/infra-hetzner-vps-clean), retrieve the sudo password from there:
+If you provisioned the server with [infra-hetzner-vps-clean](https://github.com/cyberbitsorg/infra-hetzner-vps-clean), retrieve the sudo password from there:
 
 ```bash
 # From Terraform output
@@ -154,6 +139,16 @@ To add your own template:
 1. Create `roles/nginx-apps/templates/nginx-{name}.conf.j2`
 2. Set `nginx_template: {name}` on the site in `nginx_apps.yaml`
 3. Re-run the playbook
+
+#### Deploying content
+
+After the first deploy, upload your HTML/CSS/JS files to `/opt/nginx-apps/{name}/data/` on the server:
+
+```bash
+scp -r ./my-site/* deployacc@server:/opt/nginx-apps/mysite/data/
+```
+
+The container mounts that directory read-only; files are served immediately with no container restart needed.
 
 ### Nextcloud instances
 
