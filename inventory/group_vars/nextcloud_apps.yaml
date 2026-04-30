@@ -21,10 +21,10 @@
 nextcloud_apps:
   - name: firstnc
     domain: firstnc.cyberbits.org
-    admin_user: henkbatelaan
+    admin_user: admin
   - name: secondnc
     domain: secondnc.cyberbits.org
-    admin_user: henkbatelaan
+    admin_user: admin
     
     # =============================================================================
     # Optional Settings (uncomment to override defaults)

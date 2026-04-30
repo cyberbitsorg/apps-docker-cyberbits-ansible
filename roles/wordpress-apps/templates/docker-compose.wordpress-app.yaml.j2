@@ -85,7 +85,6 @@ services:
       - ./php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     networks:
       - {{ item.name }}-internal
-      - traefik
     healthcheck:
       test: ["CMD-SHELL", "pgrep php-fpm > /dev/null"]
       interval: 30s

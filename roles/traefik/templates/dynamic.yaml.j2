@@ -11,14 +11,14 @@ http:
         customFrameOptionsValue: "SAMEORIGIN"
         referrerPolicy: "strict-origin-when-cross-origin"
         permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=()"
-        contentSecurityPolicy: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors 'self';"
+        contentSecurityPolicy: "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' blob: https:; frame-ancestors 'self';"
         customResponseHeaders:
           X-Powered-By: ""
           Server: ""
     rate-limit:
       rateLimit:
-        average: 100
-        burst: 50
+        average: 50
+        burst: 20
         period: 1s
     compress:
       compress: {}
