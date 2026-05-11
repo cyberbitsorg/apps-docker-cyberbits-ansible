@@ -80,11 +80,13 @@ services:
         define('WP_REDIS_PORT', 6379);
         define('WP_REDIS_DATABASE', 0);
         define('WP_CACHE', true);
+        define('DISABLE_WP_CRON', true);
     volumes:
       - {{ item.name }}-wordpress-data:/var/www/html
       - ./php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     networks:
       - {{ item.name }}-internal
+      - traefik
     healthcheck:
       test: ["CMD-SHELL", "pgrep php-fpm > /dev/null"]
       interval: 30s
@@ -142,6 +144,8 @@ services:
       - {{ item.name }}-wordpress-data:/var/www/html
     networks:
       - {{ item.name }}-internal
+    extra_hosts:
+      - "{{ item.domain }}:host-gateway"
     depends_on:
       db:
         condition: service_healthy
